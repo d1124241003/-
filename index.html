@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吳東穎SDGs性別平權 - 第一關</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 圖示庫 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            user-select: none;
+            background-color: #1e3a1e;
+        }
+        
+        .game-font {
+            font-family: 'Comic Neue', 'Noto Sans TC', cursive;
+        }
+
+        /* 熱氣球上下輕微浮動動畫 */
+        @keyframes balloonFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .balloon-animation {
+            animation: balloonFloat 3.5s infinite ease-in-out;
+        }
+
+        .balloon-hover:hover {
+            filter: drop-shadow(0 10px 15px rgba(255, 255, 255, 0.6));
+            cursor: pointer;
+        }
+
+        /* 熱氣球回答完畢淡出動畫 */
+        .balloon-fade-out {
+            transition: all 0.6s ease-out;
+            opacity: 0 !important;
+            transform: scale(0.1) translateY(-50px) !important;
+            pointer-events: none !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-hidden relative select-none">
+
+    <!-- 遊戲開始前的說明彈窗 (Overlay) -->
+    <div id="start-instructions-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-amber-50 border-4 border-amber-500 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl relative text-gray-800">
+            <!-- 標題 -->
+            <div class="text-center mb-5">
+                <div class="inline-block bg-amber-500 text-emerald-950 px-4 py-1.5 rounded-full font-black text-sm mb-2 shadow">
+                    <i class="fa-solid fa-cloud"></i> SDG 5 性別平權大冒險
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-black text-amber-900 tracking-wide">第一關：熱氣球探索之旅</h2>
+            </div>
+
+            <!-- 說明內容與規則規範 -->
+            <div class="bg-amber-100/80 rounded-2xl p-4 sm:p-5 border border-amber-300/80 space-y-3 mb-6 text-sm sm:text-base font-medium leading-relaxed">
+                <p class="flex items-start space-x-2">
+                    <span class="text-amber-600 font-bold flex-shrink-0">☆</span>
+                    <span>請點選畫面中的熱汽球，每個熱汽球搭配 1 題單選題。</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                    <span class="text-amber-600 font-bold flex-shrink-0">☆</span>
+                    <span>答題後，不論對、錯，答過題的熱汽球都會消失。</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                    <span class="text-amber-600 font-bold flex-shrink-0">☆</span>
+                    <span>答對的題數如果小於 8 題，就出現重新挑戰的訊息與按鈕，請重新挑戰。</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                    <span class="text-amber-600 font-bold flex-shrink-0">☆</span>
+                    <span>答對 8 題(含)以上，可以進入下一個關卡。</span>
+                </p>
+                <p class="flex items-start space-x-2 text-emerald-800 font-bold">
+                    <span class="text-amber-600 flex-shrink-0">☆</span>
+                    <span>全部的關卡完成，可以製作個人的過關證書喔！</span>
+                </p>
+            </div>
+
+            <!-- 置中的開始遊戲按鈕 -->
+            <div class="flex justify-center">
+                <button onclick="startGame()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-lg sm:text-xl px-10 py-3.5 rounded-2xl shadow-xl border-b-4 border-emerald-800 transform hover:-translate-y-0.5 active:translate-y-0.5 transition flex items-center space-x-2">
+                    <i class="fa-solid fa-play text-amber-300"></i>
+                    <span>開始遊戲</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 頂部資訊欄 -->
+    <header class="w-full bg-emerald-950/90 text-white px-4 py-3 shadow-lg border-b-4 border-amber-500 z-20 flex justify-between items-center backdrop-blur-md">
+        <!-- 左上角標題 -->
+        <div class="flex items-center space-x-3">
+            <div class="bg-amber-500 text-emerald-950 p-2 rounded-xl font-black text-xl shadow-inner">
+                <i class="fa-solid fa-venus-mars"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-black text-amber-300 tracking-wide drop-shadow">吳東穎SDGs性別平權</h1>
+                <p class="text-xs text-emerald-200">SDG 5 性別平等村莊 · 第一關</p>
+            </div>
+        </div>
+
+        <!-- 右上角答題進度與音樂按鈕 -->
+        <div class="flex items-center space-x-3 sm:space-x-4">
+            <!-- 音樂播放開關按鈕 -->
+            <button id="bgm-toggle" onclick="toggleBGM()" class="bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold px-3 py-1.5 rounded-full text-xs sm:text-sm flex items-center space-x-1.5 shadow transition">
+                <i id="bgm-icon" class="fa-solid fa-music"></i>
+                <span id="bgm-text">播放音樂</span>
+            </button>
+
+            <!-- 答對計數 -->
+            <div class="bg-emerald-900/90 px-3.5 py-1.5 rounded-full border border-emerald-500/50 flex items-center space-x-2 shadow">
+                <i class="fa-solid fa-trophy text-amber-400 text-base"></i>
+                <span class="text-xs sm:text-sm font-bold text-emerald-100">答對題數：</span>
+                <span id="score-display" class="text-lg sm:text-xl font-black text-amber-300">0 / 8 過關</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主遊戲畫面 (Canvas 地圖 + 熱氣球 + 茅草屋) -->
+    <main class="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden p-2 sm:p-4">
+        <div id="game-container" class="relative w-full max-w-5xl aspect-[16/9] rounded-3xl overflow-hidden shadow-2xl border-4 border-amber-800 bg-amber-100">
+    <!-- 主遊戲畫面 (Canvas 地圖 + 熱氣球) -->
+    <main class="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden p-2 sm:p-4">
+        <div id="game-container" class="relative w-full max-w-5xl aspect-[16/9] rounded-3xl overflow-hidden shadow-2xl border-4 border-amber-800 bg-amber-100">
+            <!-- 1. Canvas 繪製藍天白雲與村莊景觀 -->
+            <canvas id="villageCanvas" class="absolute inset-0 w-full h-full object-cover"></canvas>
+
+            <!-- 2. 隨機熱氣球圖層 (點擊回答問題，答後消失) -->
+            <div id="balloons-layer" class="absolute inset-0 pointer-events-auto z-15"></div>
+        </div>
+    </main>
+
+    <!-- 底部狀態與規則提醒 -->
+    <footer class="w-full bg-emerald-950/90 text-emerald-200 text-center py-2 text-xs sm:text-sm border-t border-emerald-800 z-20">
+        💡 點擊天空中的熱氣球進行答題，答完後熱氣球會消失，累積答對 8 題即可直接通關！
+    </footer>
+
+    <!-- 題目彈窗 Modal -->
+    <div id="question-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-amber-50 border-4 border-amber-600 rounded-3xl p-5 sm:p-7 max-w-lg w-full shadow-2xl relative transform transition-all">
+            
+            <!-- 關閉按鈕 -->
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-amber-800 hover:text-red-600 font-bold text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-amber-200 transition">
+                &times;
+            </button>
+
+            <!-- 標籤 -->
+            <div class="flex items-center space-x-2 mb-3">
+                <span id="modal-balloon-id" class="bg-amber-600 text-white font-black px-3 py-1 rounded-full text-xs sm:text-sm">熱氣球 #1</span>
+                <span class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full font-bold">SDG 5 性別平等</span>
+            </div>
+
+            <!-- 題目 -->
+            <h3 id="modal-question-text" class="text-base sm:text-lg font-bold text-gray-800 mb-5 leading-relaxed">
+                題目載入中...
+            </h3>
+
+            <!-- 選項區塊 -->
+            <div id="modal-options" class="space-y-2.5 mb-4"></div>
+
+            <!-- 解析與確定按鈕區塊 -->
+            <div id="modal-explanation" class="hidden mt-4 p-3.5 rounded-xl bg-amber-100 border border-amber-300 text-xs sm:text-sm text-amber-950">
+                <p id="explanation-text" class="font-medium mb-3"></p>
+                <button onclick="confirmAnswerAndClose()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl transition shadow">
+                    確定並繼續探索
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結算彈窗 Modal -->
+    <div id="result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white border-4 border-amber-500 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center">
+            
+            <div id="result-icon-container" class="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center text-5xl shadow-inner"></div>
+
+            <h2 id="result-title" class="text-2xl font-black mb-2 text-gray-800">遊戲結算</h2>
+            <p id="result-message" class="text-gray-600 mb-6 font-medium text-sm sm:text-base">結果載入中...</p>
+
+            <div class="bg-amber-50 p-4 rounded-2xl mb-6 border border-amber-200">
+                <div class="text-xs text-amber-700 font-bold mb-1">最終答對題數</div>
+                <div id="result-score" class="text-4xl font-black text-amber-600">0 / 8</div>
+            </div>
+
+            <div id="result-actions" class="flex justify-center"></div>
+        </div>
+    </div>
+
+    <!-- 遊戲核心 JavaScript 邏輯 -->
+    <script>
+        // --- 10 道 SDGs 性別平權相關題目 ---
+        const questions = [
+            {
+                id: 1,
+                question: "聯合國永續發展目標 (SDGs) 中，哪一個目標專門致力於實現「性別平等與婦女賦權」？",
+                options: ["SDG 3 良好健康與福祉", "SDG 5 性別平等", "SDG 8 良好工作與經濟成長", "SDG 10 減少不平等"],
+                answer: 1,
+                explanation: "解析：SDG 5 是實現性別平等與賦予所有婦女陸續發展權利的專屬目標。"
+            },
+            {
+                id: 2,
+                question: "關於「無償照顧與家務勞動」（如煮飯、照顧孩童與長者），SDG 5 主張什麼觀念？",
+                options: ["應由女性全權承擔", "應由男性完全接管", "家庭成員應共享分擔，並由公共政策給予重視", "這不屬於勞動，不需關心"],
+                answer: 2,
+                explanation: "解析：SDG 5 鼓勵通過公共服務、基礎設施及責任共享，承認與重視無償家務勞動。"
+            },
+            {
+                id: 3,
+                question: "職場上的「同工同酬」原則主要保障什麼權益？",
+                options: ["相同工作內容與績效下，不分性別皆應獲得平等薪資報酬", "男性因養家壓力較大應領取更高薪水", "女性可獲得雙倍加班費", "資深員工不分性別皆可強制退休"],
+                answer: 0,
+                explanation: "解析：同工同酬旨在消除職場上的性別薪資歧視，保障男女勞動價值平等。"
+            },
+            {
+                id: 4,
+                question: "消除對婦女一切形式歧視公約的國際簡稱是什麼？",
+                options: ["UNESCO", "UNICEF", "CEDAW", "WHO"],
+                answer: 2,
+                explanation: "解析：CEDAW 是《消除對婦女一切形式歧視公約》的簡稱，被譽為「婦女人權宣言」。"
+            },
+            {
+                id: 5,
+                question: "下列何者屬於打破「性別刻板印象」的好做法？",
+                options: ["限制男孩不能流淚表達情緒", "鼓勵女孩選擇 STEM (科學、技術、工程、數學) 領域發展", "要求女性在職場必須穿裙裝", "認為只有男性適合當高階主管"],
+                answer: 1,
+                explanation: "解析：鼓勵每個人依據興趣適性發展、不受傳統性別期待限制，是打破刻板印象的核心。"
+            },
+            {
+                id: 6,
+                question: "關於「育嬰留職停薪」（育嬰假）的法規與平權觀念，下列何者正確？",
+                options: ["僅限女性申請", "僅限男性申請", "父母雙方皆有權申請，共同分擔育兒責任", "申請者必須接受減薪懲罰"],
+                answer: 2,
+                explanation: "解析：雙親皆可申請育嬰假，有助於減緩女性職涯中斷並鼓勵男性參與家庭照顧。"
+            },
+            {
+                id: 7,
+                question: "在校園或職場中看到有人因性別氣質被取笑時，最適當的做法是？",
+                options: ["加入嘲笑行列", "冷眼旁觀", "勇敢站出來制止或向相關單位尋求協助，展現包容尊重", "強迫對方改變性別氣質"],
+                answer: 2,
+                explanation: "解析：尊重多元性別氣質與消除霸凌是營造平等友善環境的重要基礎。"
+            },
+            {
+                id: 8,
+                question: "「數位性別暴力」（如未經同意散布私密照片、網路性騷擾）屬於何種性質？",
+                options: ["無傷害性的網路玩笑", "嚴重侵犯隱私與人格權的暴力行為，應受法律約束", "僅屬於個人私德問題", "只要不看網路就不構成傷害"],
+                answer: 1,
+                explanation: "解析：數位性別暴力是嚴重的人權侵害行為，防範與打擊此類暴力是性別平權的重要課題。"
+            },
+            {
+                id: 9,
+                question: "推動「性別主流化」（Gender Mainstreaming）的宗旨是什麼？",
+                options: ["在政府與機構制定所有政策與計畫時，皆納入性別觀點與平權考量", "將所有公共資源獨利給女性", "規定所有衣服必須無性別特徵", "只讓女性參與投票"],
+                answer: 0,
+                explanation: "解析：性別主流化是一種策略，確保任何決策均能兼顧不同性別的需求與影響。"
+            },
+            {
+                id: 10,
+                question: "在政治與公共事務參與方面，SDG 5 提出了什麼具體目標？",
+                options: ["確保女性在各層級決策中獲得充分有效參與及平等的領導機會", "限制女性參政比例不得超過 10%", "政治活動應完全排除女性參與", "僅允許女性擔任諮詢角色"],
+                answer: 0,
+                explanation: "解析：SDG 5 強調確保女性在政治、經濟及公共決策層級擁有平等的領導與參與機會。"
+            }
+        ];
+
+        // 狀態管理
+        let answeredStatus = new Array(10).fill(null); // null: 未答, true: 答對, false: 答錯
+        let currentQuestionIndex = null;
+        let score = 0;
+        let isGameEnded = false;
+        let balloonPositions = []; // 儲存10個熱氣球的隨機座標與倍率
+
+        // 初始化
+        window.onload = function() {
+            initBalloonPositions();
+            drawVillageMap();
+            renderBalloons();
+            updateScoreUI();
+            window.addEventListener('resize', drawVillageMap);
+        };
+
+        // 按下「開始遊戲」時啟動
+        function startGame() {
+            document.getElementById('start-instructions-modal').classList.add('hidden');
+            if (!isBgmPlaying) {
+                toggleBGM(); // 自動播音樂
+            }
+        }
+
+        // 初始化 10 個熱氣球在上半部的隨機座標 (1.0, 1.2, 1.5 倍)
+        function initBalloonPositions() {
+            const scales = [1.0, 1.2, 1.5];
+            balloonPositions = [];
+
+            for (let i = 0; i < 10; i++) {
+                // 上半部 x: 6% ~ 86%, y: 8% ~ 48%
+                const x = 6 + (i % 5) * 18 + (Math.random() * 8 - 4);
+                const y = (i < 5) ? (8 + Math.random() * 15) : (28 + Math.random() * 18);
+                const scale = scales[Math.floor(Math.random() * scales.length)];
+                balloonPositions.push({ x, y, scale });
+            }
+        }
+
+        // --- 1. Canvas 村莊與天空繪圖 ---
+        function drawVillageMap() {
+            const canvas = document.getElementById('villageCanvas');
+            const container = document.getElementById('game-container');
+            
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 藍天漸層
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.75);
+            skyGrad.addColorStop(0, '#74c0fc');
+            skyGrad.addColorStop(1, '#a5d8ff');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, w, h * 0.65);
+
+            // 綠草地山丘
+            const grassGrad = ctx.createLinearGradient(0, h * 0.6, 0, h);
+            grassGrad.addColorStop(0, '#51cf66');
+            grassGrad.addColorStop(1, '#2b8a3e');
+            ctx.fillStyle = grassGrad;
+            ctx.beginPath();
+            ctx.moveTo(0, h * 0.6);
+            ctx.quadraticCurveTo(w * 0.4, h * 0.52, w, h * 0.62);
+            ctx.lineTo(w, h);
+            ctx.lineTo(0, h);
+            ctx.fill();
+
+            // 白雲
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+            const clouds = [{x:0.1, y:0.15, r:20}, {x:0.45, y:0.1, r:25}, {x:0.8, y:0.2, r:22}];
+            clouds.forEach(c => {
+                const cx = c.x * w;
+                const cy = c.y * h;
+                ctx.beginPath();
+                ctx.arc(cx, cy, c.r, 0, Math.PI * 2);
+                ctx.arc(cx + 15, cy - 8, c.r * 0.8, 0, Math.PI * 2);
+                ctx.arc(cx + 30, cy, c.r * 0.9, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        // --- 2. 渲染 10 個隨機熱氣球 (答題後隱藏) ---
+        function renderBalloons() {
+            const layer = document.getElementById('balloons-layer');
+            layer.innerHTML = '';
+
+            const colors = [
+                { primary: '#ff595e', secondary: '#ffca3a' },
+                { primary: '#1982c4', secondary: '#8ac926' },
+                { primary: '#6a4c93', secondary: '#ffca3a' },
+                { primary: '#ff924c', secondary: '#52b788' },
+                { primary: '#d8f3dc', secondary: '#1b4332' }
+            ];
+
+            balloonPositions.forEach((pos, index) => {
+                const balloonNumber = index + 1;
+                const status = answeredStatus[index];
+                const color = colors[index % colors.length];
+
+                const balloonDiv = document.createElement('div');
+                balloonDiv.id = `balloon-node-${index}`;
+                balloonDiv.style.left = `${pos.x}%`;
+                balloonDiv.style.top = `${pos.y}%`;
+
+                // 若已回答過，給予淡出消失樣式
+                if (status !== null) {
+                    balloonDiv.className = 'absolute transform -translate-x-1/2 -translate-y-1/2 balloon-fade-out';
+                } else {
+                    balloonDiv.className = 'absolute transform -translate-x-1/2 -translate-y-1/2 balloon-animation balloon-hover transition-all';
+                    balloonDiv.style.transform = `scale(${pos.scale})`;
+                    balloonDiv.onclick = () => openQuestionModal(index);
+                }
+
+                balloonDiv.innerHTML = `
+                    <div class="relative flex flex-col items-center">
+                        <span class="bg-amber-900/90 text-amber-200 text-xs font-black px-2 py-0.5 rounded-full border border-amber-400 shadow mb-1 game-font">
+                            熱汽球 #${balloonNumber}
+                        </span>
+                        <div class="relative w-12 h-16 sm:w-14 sm:h-18">
+                            <svg viewBox="0 0 60 75" class="w-full h-full drop-shadow-lg">
+                                <path d="M 30,5 A 25,25 0 0,1 55,30 C 55,42 40,55 30,55 C 20,55 5,42 5,30 A 25,25 0 0,1 30,5 Z" fill="${color.primary}"/>
+                                <path d="M 20,7 C 27,20 27,40 20,53 C 25,55 35,55 40,53 C 33,40 33,20 40,7 Z" fill="${color.secondary}"/>
+                                <line x1="20" y1="54" x2="25" y2="64" stroke="#4a3b32" stroke-width="1.5"/>
+                                <line x1="40" y1="54" x2="35" y2="64" stroke="#4a3b32" stroke-width="1.5"/>
+                                <rect x="23" y="64" width="14" height="10" rx="2" fill="#8c592b" stroke="#5a3818" stroke-width="1"/>
+                            </svg>
+                            <div class="absolute -top-1 -right-1 bg-amber-400 text-amber-950 font-black rounded-full w-5 h-5 flex items-center justify-center shadow border border-white text-xs">
+                                ?
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                layer.appendChild(balloonDiv);
+            });
+        }
+
+        // --- 3. 題目彈窗互動 ---
+        function openQuestionModal(index) {
+            if (isGameEnded || answeredStatus[index] !== null) return;
+            
+            playEffectSound(600, 0.1);
+            currentQuestionIndex = index;
+            const q = questions[index];
+
+            document.getElementById('modal-balloon-id').innerText = `熱氣球 #${index + 1}`;
+            document.getElementById('modal-question-text').innerText = q.question;
+            
+            const optionsContainer = document.getElementById('modal-options');
+            optionsContainer.innerHTML = '';
+            document.getElementById('modal-explanation').classList.add('hidden');
+
+            q.options.forEach((optText, optIdx) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left p-3.5 rounded-xl border-2 transition font-medium flex items-start space-x-3 text-xs sm:text-base bg-white border-amber-200 hover:border-amber-500 hover:bg-amber-50 text-gray-800 shadow-sm';
+
+                const letter = String.fromCharCode(65 + optIdx);
+                btn.innerHTML = `
+                    <span class="bg-amber-200 text-amber-900 font-bold rounded-lg px-2.5 py-0.5 text-xs flex-shrink-0">${letter}</span>
+                    <span class="flex-1">${optText}</span>
+                `;
+
+                btn.onclick = () => handleAnswer(optIdx);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('question-modal').classList.remove('hidden');
+        }
+
+        // --- 4. 處理作答與隱藏熱氣球 ---
+        function handleAnswer(selectedIndex) {
+            const q = questions[currentQuestionIndex];
+            const isCorrect = (selectedIndex === q.answer);
+
+            answeredStatus[currentQuestionIndex] = isCorrect;
+
+            if (isCorrect) {
+                score++;
+                playEffectSound(880, 0.2);
+            } else {
+                playEffectSound(220, 0.25);
+            }
+
+            updateScoreUI();
+
+            const buttons = document.querySelectorAll('#modal-options button');
+            buttons.forEach((btn, idx) => {
+                btn.disabled = true;
+                if (idx === q.answer) {
+                    btn.className = 'w-full text-left p-3.5 rounded-xl border-2 bg-green-100 border-green-500 text-green-900 font-bold flex items-start space-x-3 text-xs sm:text-base shadow';
+                } else if (idx === selectedIndex && !isCorrect) {
+                    btn.className = 'w-full text-left p-3.5 rounded-xl border-2 bg-red-100 border-red-400 text-red-800 flex items-start space-x-3 text-xs sm:text-base';
+                } else {
+                    btn.className = 'w-full text-left p-3.5 rounded-xl border-2 bg-gray-100 border-gray-300 text-gray-400 flex items-start space-x-3 text-xs sm:text-base';
+                }
+            });
+
+            const expDiv = document.getElementById('modal-explanation');
+            document.getElementById('explanation-text').innerText = (isCorrect ? '✅ 答對了！ ' : '❌ 答錯了！ ') + q.explanation;
+            expDiv.classList.remove('hidden');
+        }
+
+        // 點擊「確定並繼續」後關閉彈窗並淡出隱藏熱氣球
+        function confirmAnswerAndClose() {
+            closeModal();
+
+            if (currentQuestionIndex !== null) {
+                const balloonNode = document.getElementById(`balloon-node-${currentQuestionIndex}`);
+                if (balloonNode) {
+                    balloonNode.classList.add('balloon-fade-out');
+                }
+            }
+
+            checkPassCondition();
+        }
+
+        function closeModal() {
+            document.getElementById('question-modal').classList.add('hidden');
+        }
+
+        function updateScoreUI() {
+            document.getElementById('score-display').innerText = `${score} / 8 過關`;
+        }
+
+        // --- 5. 通關判定 (答對>=8題直接過關) ---
+        function checkPassCondition() {
+            if (isGameEnded) return;
+
+            // 1. 條件一：答對 >= 8 題 -> 成功過關
+            if (score >= 8) {
+                isGameEnded = true;
+                setTimeout(() => showResultModal(true), 600);
+                return;
+            }
+
+            // 2. 條件二：已答完 10 題且答對 < 8 題 -> 失敗重新挑戰
+            const answeredCount = answeredStatus.filter(s => s !== null).length;
+            if (answeredCount === 10 && score < 8) {
+                isGameEnded = true;
+                setTimeout(() => showResultModal(false), 600);
+            }
+        }
+
+        // --- 6. 通關 / 失敗彈窗 ---
+        function showResultModal(isPassed) {
+            closeModal();
+            const resultModal = document.getElementById('result-modal');
+            const iconContainer = document.getElementById('result-icon-container');
+            const titleEl = document.getElementById('result-title');
+            const msgEl = document.getElementById('result-message');
+            const scoreEl = document.getElementById('result-score');
+            const actionsEl = document.getElementById('result-actions');
+
+            scoreEl.innerText = `${score} 題答對`;
+
+            if (isPassed) {
+                playEffectSound(523.25, 0.4);
+                iconContainer.className = "w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center text-5xl bg-green-100 text-green-600 border-4 border-green-500 shadow-lg animate-bounce";
+                iconContainer.innerHTML = `<i class="fa-solid fa-trophy"></i>`;
+                
+                titleEl.innerText = "🎉 恭喜通過第一關！";
+                titleEl.className = "text-2xl font-black mb-2 text-green-700";
+                
+                msgEl.innerText = "太棒了！你已成功答對 8 題以上的性別平權問題，順利開啟通往下一關的通道！";
+                
+                actionsEl.innerHTML = `
+                    <a href="level2.html" class="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg px-8 py-3.5 rounded-2xl shadow-xl transform hover:-translate-y-0.5 transition active:translate-y-0">
+                        <span>前往下一關</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                `;
+            } else {
+                playEffectSound(150, 0.4);
+                iconContainer.className = "w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center text-5xl bg-amber-100 text-amber-700 border-4 border-amber-500 shadow-lg";
+                iconContainer.innerHTML = `<i class="fa-solid fa-rotate-right"></i>`;
+                
+                titleEl.innerText = "💪 挑戰未成功";
+                titleEl.className = "text-2xl font-black mb-2 text-amber-800";
+                
+                msgEl.innerText = "答對題數未達 8 題門檻，請點擊下方按鈕重新挑戰第一關！";
+                
+                actionsEl.innerHTML = `
+                    <button onclick="location.reload()" class="inline-flex items-center space-x-2 bg-amber-600 hover:bg-amber-700 text-white font-black text-lg px-8 py-3.5 rounded-2xl shadow-xl transform hover:-translate-y-0.5 transition active:translate-y-0">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>重新挑戰</span>
+                    </button>
+                `;
+            }
+
+            resultModal.classList.remove('hidden');
+        }
+
+        // --- 7. Web Audio API 音效與背景音樂 ---
+        let audioCtx = null;
+        let isBgmPlaying = false;
+        let bgmInterval = null;
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function toggleBGM() {
+            initAudioContext();
+            const textEl = document.getElementById('bgm-text');
+            const iconEl = document.getElementById('bgm-icon');
+
+            if (isBgmPlaying) {
+                clearInterval(bgmInterval);
+                isBgmPlaying = false;
+                textEl.innerText = "播放音樂";
+                iconEl.className = "fa-solid fa-music";
+            } else {
+                isBgmPlaying = true;
+                textEl.innerText = "暫停音樂";
+                iconEl.className = "fa-solid fa-pause";
+                
+                const notes = [261.63, 329.63, 392.00, 523.25, 440.00, 349.23, 329.63, 293.66];
+                let noteIdx = 0;
+                
+                bgmInterval = setInterval(() => {
+                    if (!isBgmPlaying) return;
+                    playTone(notes[noteIdx], 0.25, 'sine', 0.05);
+                    noteIdx = (noteIdx + 1) % notes.length;
+                }, 400);
+            }
+        }
+
+        function playTone(freq, duration, type = 'sine', volume = 0.1) {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function playEffectSound(freq, duration) {
+            initAudioContext();
+            playTone(freq, duration, 'triangle', 0.15);
+        }
+    </script>
+</body>
+</html>
